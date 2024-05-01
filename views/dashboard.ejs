@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="dashboard.css"> <!-- Link to your external CSS file -->
+</head>
+<body>
+  <div class="container mt-5">
+    <h1 class="mb-3">Grade <%= user.grade %> Dashboard - <%= user.username %></h1>
+
+    <!-- Filter Form -->
+    <form action="/dashboard" method="get" class="my-4">
+      <div class="row g-3 align-items-center">
+        <div class="col-auto">
+          <label for="filter" class="col-form-label">Select Attendance Type:</label>
+        </div>
+        <div class="col-auto">
+          <select name="filter" id="filter" class="form-select">
+            <option value="All" <% if (!currentFilter.type || currentFilter.type === 'All') { %>selected<% } %>>All</option>
+            <option value="Absence" <% if (currentFilter.type === 'Absence') { %>selected<% } %>>Absences</option>
+            <option value="Tardy" <% if (currentFilter.type === 'Tardy') { %>selected<% } %>>Tardies</option>
+          </select>
+        </div>
+        <div class="col-auto">
+          <label for="count" class="col-form-label">Threshold:</label>
+        </div>
+        <div class="col-auto">
+          <select name="count" id="count" class="form-select">
+            <option value="All" <% if (!currentFilter.threshold || currentFilter.threshold === 'All') { %>selected<% } %>>All</option>
+            <option value="3" <% if (currentFilter.threshold === '3') { %>selected<% } %>>3</option>
+            <option value="6" <% if (currentFilter.threshold === '6') { %>selected<% } %>>6</option>
+            <option value="9" <% if (currentFilter.threshold === '9') { %>selected<% } %>>9</option>
+          </select>
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-primary">Apply Filter</button>
+        </div>
+      </div>
+    </form>
+
+    <table class="table table-hover table-striped">
+      <thead class="table-dark">
+        <tr>
+          <th>Student and Class</th>
+          <th>Absences</th>
+          <th>Tardies</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% Object.entries(attendance).forEach(([key, record], index) => { %>
+        <tr>
+          <td><a href="/student/<%= encodeURIComponent(key.split('-')[0].trim()) %>"><%= key.substring(0, 60) %></a></td>
+          <td><%= record.Absence || 0 %></td>
+          <td><%= record.Tardy || 0 %></td>
+          <td>
+            <input type="checkbox" onchange="updateNotification(this, '<%= key %>', 'advisorNotified')" 
+                   <%= record.advisorNotified ? 'checked' : '' %> data-index="<%= index %>" > Advisor Notified
+            <input type="checkbox" onchange="updateNotification(this, '<%= key %>', 'emailSent')" 
+                   <%= record.emailSent ? 'checked' : '' %> data-index="<%= index %>" > Email Sent
+            <input type="checkbox" onchange="updateNotification(this, '<%= key %>', 'letterSent')" 
+                   <%= record.letterSent ? 'checked' : '' %> data-index="<%= index %>" > Letter Sent
+          </td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+function updateNotification(checkbox, studentClass, field) {
+    const checked = checkbox.checked;
+    $.ajax({
+        url: '/update-notification',
+        type: 'POST',
+        data: {
+            studentClass: studentClass,
+            field: field,
+            value: checked
+        },
+        success: function(response) {
+            alert('Notification updated successfully');
+        },
+        error: function(error) {
+            console.log(error);
+            alert('Error updating notification');
+            checkbox.checked = !checked; // Revert checkbox on error
+        }
+    });
+}
+</script>
+
+</body>
+</html>

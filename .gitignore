@@ -1,0 +1,8 @@
+# Ignore Node.js modules folder
+node_modules/
+
+# Ignore .env files
+*.env
+
+# Ignore the data folder
+data/
